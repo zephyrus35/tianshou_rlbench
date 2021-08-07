@@ -72,22 +72,22 @@ def parse_args():
 def test_ppo(args):
     state = 'observation' if args.observation else 'state'
     args.task = args.task + '-' + state + '-v0'
+    
+    # set up envs
+    train_envs = SubprocVectorEnv(
+        [lambda: gym.make(args.task) for _ in range(args.training_num)],
+        # norm_obs=True
+    )
+    # train_envs = env
+    eval_envs = SubprocVectorEnv(
+        [lambda: gym.make(args.task) for _ in range(args.eval_num)],
+        # norm_obs=True, obs_rms=train_envs.obs_rms, update_obs_rms=False
+    )
+    # eval_envs = env
     env = gym.make(args.task)
     args.state_shape = env.observation_space.shape or env.observation_space.n
     args.action_shape = env.action_space.shape or env.action_space.n
     args.max_action = env.action_space.high[0]
-    # set up envs
-    # TODO how to deal with multiple envs
-    # train_envs = SubprocVectorEnv(
-    #     [lambda: gym.make(task) for _ in range(args.training_num)],
-    #     # norm_obs=True
-    # )
-    train_envs = env
-    # eval_envs = SubprocVectorEnv(
-    #     [lambda: gym.make(task) for _ in range(args.eval_num)],
-    #     # norm_obs=True, obs_rms=train_envs.obs_rms, update_obs_rms=False
-    # )
-    eval_envs = env
     # seed
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -118,10 +118,10 @@ def test_ppo(args):
         
         lr_scheduler = LambdaLR(
             optimizer, lambda epoch: 1 - epoch/max_update)
-        
+    
     def dist(*logits):
         return Independent(Normal(*logits), 1)
-    # ppo finish
+    
     policy = PPOPolicy(actor, critic, optim, dist, discount_factor=args.gamma,
                        gae_lambda=args.gae_lambda, max_grad_norm=args.max_grad_norm,
                        vf_coef=args.vf_coef, ent_coef=args.ent_coef, 
@@ -145,9 +145,10 @@ def test_ppo(args):
     
     # data & collector
     if args.training_num > 1:
-        buffer = VectorReplayBuffer(args.buffer_size, 1)
+        buffer = VectorReplayBuffer(args.buffer_size, args.training_num)
     else:
         buffer = ReplayBuffer(args.buffer_size)
+    # TODO termination of envs after max steps
     train_collector = Collector(policy, train_envs, buffer, exploration_noise=True)
     eval_collector = Collector(policy, eval_envs)
     
@@ -162,7 +163,7 @@ def test_ppo(args):
             'iter_step': iter_step,
             'optimizor': optimizer.state_dict(),
             'policy': policy.state_dict()
-        }, os.path.join())
+        }, os.path.join(args.logdir, 'models', 'ppo', net_desc, f'ppo_{epoch}.pt'))
     
     if not args.watch:
         result = onpolicy_trainer(

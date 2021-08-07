@@ -99,17 +99,16 @@ def test_dqn(args):
     args.action_shape = env.action_space.shape or env.action_space.n
     print(args.state_shape, args.action_shape)
 
-    # TODO how to deal with multiple envs
-    # train_envs = DummyVectorEnv(
-    #     [lambda: gym.make(task) for _ in range(args.training_num)],
-    #     # norm_obs=True
-    # )
-    train_envs = env
-    # eval_envs = DummyVectorEnv(
-    #     [lambda: gym.make(task) for _ in range(args.eval_num)],
-    #     # norm_obs=True, obs_rms=train_envs.obs_rms, update_obs_rms=False
-    # )
-    eval_envs = env
+    train_envs = SubprocVectorEnv(
+        [lambda: gym.make(task) for _ in range(args.training_num)],
+        # norm_obs=True
+    )
+    # train_envs = env
+    eval_envs = SubprocVectorEnv(
+        [lambda: gym.make(task) for _ in range(args.eval_num)],
+        # norm_obs=True, obs_rms=train_envs.obs_rms, update_obs_rms=False
+    )
+    # eval_envs = env
     # seed
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
