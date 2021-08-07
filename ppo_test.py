@@ -4,7 +4,7 @@ import pprint
 import datetime
 import argparse
 import numpy as np
-import rlbench.gym
+import wrapper
 from typing import Union, Optional, Sequence
 
 import torch
@@ -32,8 +32,8 @@ def parse_args():
                         help='use state or raw observation')
     parser.add_argument('--watch', action='store_true')
 
-    parser.add_argument('--training_num', default=10, type=int)
-    parser.add_argument('--eval_num', default=10, type=int)
+    parser.add_argument('--training_num', default=1, type=int)
+    parser.add_argument('--eval_num', default=1, type=int)
     parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--buffer_size', default=4096, type=int)
     parser.add_argument('--seed', default=0, type=int)
@@ -71,7 +71,7 @@ def parse_args():
 
 def test_ppo(args):
     state = 'observation' if args.observation else 'state'
-    args.task = args.task + '-' + state + '-v0'
+    args.task = args.task + '-' + state + '-v1'
     
     # set up envs
     train_envs = SubprocVectorEnv(

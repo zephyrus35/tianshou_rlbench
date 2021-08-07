@@ -32,6 +32,8 @@ def parser_args():
     parser.add_argument('--observation', default=False, action='store_true', help='')
     parser.add_argument('--task', default='reach_target', type=str, help='')
     parser.add_argument('--resume_path', default=None, type=str)
+    parser.add_argument('--watch', default=False, action='store_true')
+    parser.add_argument('--seed', default=0, type=int)
     
     parser.add_argument('--training_num', default=10, type=int, help='')
     parser.add_argument('--eval_num', default=1, type=int, help='')
@@ -45,15 +47,16 @@ def parser_args():
     parser.add_argument('--step_per_collect', default=1, type=int)
     parser.add_argument('--update_per_step', default=1, type=int)
     parser.add_argument('--n_step', default=1, type=int)
-    parser.add_argument('--batch_size', defualt=256, type=int)
+    parser.add_argument('--batch_size', default=256, type=int)
     parser.add_argument('--exploration_noise', default=0.1, type=float)
     parser.add_argument('--start_timesteps', default=20000, type=int)
+    parser.add_argument('--buffer_size', default=100000, type=int)
     parser.add_argument('--render', type=float, default=0.)
     
     parser.add_argument('--device', 
                         default='cuda' if torch.cuda.is_available() else 'cpu',
                         type=str, help='use gpu')
-    parser.add_argument('--logdir', default='log', type=str)
+    parser.add_argument('--logdir', default='logs', type=str)
     return parser.parse_args()
 
 
